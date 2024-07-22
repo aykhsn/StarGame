@@ -51,7 +51,7 @@
         const game = new Phaser.Game(config);
 
         function preload() {
-            this.load.svg('star', 'assets/star.svg', { width: 200, height: 200 });
+            this.load.svg('star', 'assets/star.svg', { width: 300, height: 300 });
             this.load.audio('bounce', 'assets/kiran.mp3');
             this.load.audio('kirakirarin', 'assets/kirakirarin.mp3');
             this.load.audio('yatta', 'assets/yattane.mp3'); // 「やったー」の効果音をロード
@@ -59,7 +59,7 @@
 
         function create() {
             const numStars = Phaser.Math.Between(5, 7);
-            const starSize = 140;
+            const starSize = 130;
             const stars = [];
             const positions = [];
             let lastStar = null;
@@ -70,7 +70,7 @@
             const yattaSound = this.sound.add('yatta');
 
             // 背景のキラキラ星を配置
-            const numBackgroundStars = 90;
+            const numBackgroundStars = 50;
             const pastelColors = [0xffb3ba, 0xffdfba, 0xffffba, 0xbaffc9, 0xbae1ff];
 
             function drawStar(graphics, x, y, size, color) {
@@ -93,7 +93,7 @@
             for (let i = 0; i < numBackgroundStars; i++) {
                 let x = Phaser.Math.Between(0, this.scale.width);
                 let y = Phaser.Math.Between(0, this.scale.height);
-                let size = Phaser.Math.Between(4, 10); // サイズをランダムに設定
+                let size = Phaser.Math.Between(6, 12); // サイズをランダムに設定
                 let color = Phaser.Utils.Array.GetRandom(pastelColors); // パステルカラーをランダムに選択
                 let alphaFrom = Phaser.Math.FloatBetween(0.3, 0.7);
                 let alphaTo = Phaser.Math.FloatBetween(0.8, 1);
