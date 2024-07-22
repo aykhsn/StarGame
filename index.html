@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キラキラせいざ｜ゲームでぴこぽ</title>
+    <meta name="robots" content="noindex" />
+    <meta property="og:url" content="../../games/kirakiraseiza">
+    <meta property="og:type" content="game">
+    <meta property="og:image" content="../../wp-content/uploads/2024/07/kv_kirakiraseiza.png">
+    <meta property="og:title" content="キラキラせいざ">
+    <meta property="og:descripion" content="赤ちゃん子ども向けの無料ミニゲームサイト"> 
+    <meta property="og:site_name" content="ゲームでぴこぽ" />
+    <link rel="icon" href="../../wp-content/uploads/2024/07/icon.png">
+    <link rel="apple-touch-icon" href="../../wp-content/uploads/2024/07/icon.png">
+    <link rel="apple-touch-icon-precomposed" href="../../wp-content/uploads/2024/07/icon.png">
+    <meta name="description" content="赤ちゃん子ども向けの無料ミニゲームサイト">
+    <meta name="keywords" content="game, ゲーム, キラキラせいざ、知育、子供向けゲーム">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #665ba6;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: '#665ba6',
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        const game = new Phaser.Game(config);
+
+        function preload() {
+            this.load.svg('star', 'assets/star.svg', { width: 200, height: 200 });
+            this.load.svg('backgroundStar', 'assets/background-star.svg'); // 背景用の白い星画像
+            this.load.audio('bounce', 'assets/kiran.mp3');
+            this.load.audio('kirakirarin', 'assets/kirakirarin.mp3');
+        }
+
+        function create() {
+            const numStars = Phaser.Math.Between(7, 9);
+            const starSize = 120;
+            const stars = [];
+            const positions = [];
+            let lastStar = null;
+
+            // 効果音の設定
+            const bounceSound = this.sound.add('bounce');
+            const kirakirarinSound = this.sound.add('kirakirarin');
+
+            // 背景のキラキラ星を配置
+            const numBackgroundStars = 80;
+            this.backgroundStars = this.add.group();
+
+            for (let i = 0; i < numBackgroundStars; i++) {
+                let x = Phaser.Math.Between(0, this.scale.width);
+                let y = Phaser.Math.Between(0, this.scale.height);
+                let size = Phaser.Math.Between(10, 30); // サイズをランダムに設定
+                let alphaFrom = Phaser.Math.FloatBetween(0.3, 0.7);
+                let alphaTo = Phaser.Math.FloatBetween(0.8, 1);
+                let duration = Phaser.Math.Between(800, 1500); // 瞬きのタイミングをランダムに設定
+
+                let star = this.add.image(x, y, 'backgroundStar').setDisplaySize(size, size);
+                star.setAlpha(alphaFrom);
+                this.backgroundStars.add(star);
+
+                // 瞬くアニメーション
+                this.tweens.add({
+                    targets: star,
+                    alpha: { from: alphaFrom, to: alphaTo },
+                    duration: duration,
+                    yoyo: true,
+                    repeat: -1
+                });
+            }
+
+            this.graphics = this.add.graphics({ lineStyle: { width: 4, color: 0xffb800 } });
+
+            for (let i = 0; i < numStars; i++) {
+                let x, y, overlapping;
+
+                do {
+                    x = Phaser.Math.Between(starSize / 2, this.scale.width - starSize / 2);
+                    y = Phaser.Math.Between(starSize / 2, this.scale.height - starSize / 2);
+                    overlapping = positions.some(pos => {
+                        return Phaser.Math.Distance.Between(x, y, pos.x, pos.y) < starSize;
+                    });
+                } while (overlapping);
+
+                positions.push({ x, y });
+
+                let star = this.add.image(x, y, 'star').setInteractive();
+                star.setDisplaySize(starSize, starSize);
+
+                // 星がゆらゆら揺れるアニメーション
+                this.tweens.add({
+                    targets: star,
+                    angle: { from: -5, to: 5 },
+                    duration: Phaser.Math.Between(1400, 2000),
+                    yoyo: true,
+                    repeat: -1,
+                    ease: 'Sine.easeInOut',
+                    delay: Phaser.Math.Between(-200, 0) // 揺れるタイミングをランダムに設定
+                });
+
+                star.on('pointerdown', function () {
+                    bounceSound.play(); // 効果音を再生
+
+                    this.scene.tweens.add({
+                        targets: this,
+                        scaleX: 0.2,
+                        scaleY: 0.2,
+                        duration: 500,
+                        ease: 'Bounce.easeOut',
+                        onComplete: () => {
+                            this.disableInteractive(); // 一度クリックされたらインタラクティブを無効にする
+
+                            // 全ての星が小さくなったかチェック
+                            if (stars.every(s => s.scaleX === 0.2 && s.scaleY === 0.2)) {
+                                setTimeout(() => {
+                                    this.scene.tweens.add({
+                                        targets: this.scene.graphics,
+                                        alpha: 0,
+                                        duration: 4000,
+                                        ease: 'Power2',
+                                        onComplete: () => {
+                                            this.scene.graphics.clear();
+                                        }
+                                    });
+
+                                    stars.forEach(star => {
+                                        kirakirarinSound.play();
+
+                                        this.scene.tweens.add({
+                                            targets: star,
+                                            x: `-=${Phaser.Math.Between(-800, 800)}`,
+                                            y: `-=${Phaser.Math.Between(-800, 800)}`,
+                                            alpha: 0,
+                                            duration: 3000,
+                                            ease: 'Power2',
+                                            onComplete: () => {
+                                                star.destroy();
+                                            }
+                                        });
+                                    });
+                                }, 600);
+                            }
+                        }
+                    });
+
+                    if (lastStar) {
+                        this.scene.graphics.lineBetween(lastStar.x, lastStar.y, this.x, this.y);
+                    }
+
+                    lastStar = this;
+                });
+
+                stars.push(star);
+            }
+
+            this.stars = stars;
+        }
+
+        function update() {
+            // No need for update logic in this case
+        }
+
+        window.addEventListener('resize', () => {
+            game.scale.resize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
