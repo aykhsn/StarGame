@@ -52,7 +52,6 @@
 
         function preload() {
             this.load.svg('star', 'assets/star.svg', { width: 200, height: 200 });
-            this.load.svg('backgroundStar', 'assets/background-star.svg'); // 背景用の白い星画像
             this.load.audio('bounce', 'assets/kiran.mp3');
             this.load.audio('kirakirarin', 'assets/kirakirarin.mp3');
             this.load.audio('yatta', 'assets/yattane.mp3'); // 「やったー」の効果音をロード
@@ -60,7 +59,7 @@
 
         function create() {
             const numStars = Phaser.Math.Between(5, 7);
-            const starSize = 120;
+            const starSize = 140;
             const stars = [];
             const positions = [];
             let lastStar = null;
@@ -71,24 +70,41 @@
             const yattaSound = this.sound.add('yatta');
 
             // 背景のキラキラ星を配置
-            const numBackgroundStars = 80;
-            this.backgroundStars = this.add.group();
+            const numBackgroundStars = 90;
+            const pastelColors = [0xffb3ba, 0xffdfba, 0xffffba, 0xbaffc9, 0xbae1ff];
+
+            function drawStar(graphics, x, y, size, color) {
+                graphics.fillStyle(color, 1.0);
+                graphics.beginPath();
+                for (let j = 0; j < 5; j++) {
+                    const angle = Phaser.Math.DegToRad(72 * j - 90);
+                    const outerX = x + Math.cos(angle) * size;
+                    const outerY = y + Math.sin(angle) * size;
+                    graphics.lineTo(outerX, outerY);
+                    const innerAngle = angle + Phaser.Math.DegToRad(36);
+                    const innerX = x + Math.cos(innerAngle) * (size / 2.5);
+                    const innerY = y + Math.sin(innerAngle) * (size / 2.5);
+                    graphics.lineTo(innerX, innerY);
+                }
+                graphics.closePath();
+                graphics.fillPath();
+            }
 
             for (let i = 0; i < numBackgroundStars; i++) {
                 let x = Phaser.Math.Between(0, this.scale.width);
                 let y = Phaser.Math.Between(0, this.scale.height);
-                let size = Phaser.Math.Between(10, 30); // サイズをランダムに設定
+                let size = Phaser.Math.Between(4, 10); // サイズをランダムに設定
+                let color = Phaser.Utils.Array.GetRandom(pastelColors); // パステルカラーをランダムに選択
                 let alphaFrom = Phaser.Math.FloatBetween(0.3, 0.7);
                 let alphaTo = Phaser.Math.FloatBetween(0.8, 1);
                 let duration = Phaser.Math.Between(800, 1500); // 瞬きのタイミングをランダムに設定
 
-                let star = this.add.image(x, y, 'backgroundStar').setDisplaySize(size, size);
-                star.setAlpha(alphaFrom);
-                this.backgroundStars.add(star);
+                let graphics = this.add.graphics();
+                drawStar(graphics, x, y, size, color);
+                graphics.alpha = alphaFrom;
 
-                // 瞬くアニメーション
-                this.tweens.add({
-                    targets: star,
+                this.add.tween({
+                    targets: graphics,
                     alpha: { from: alphaFrom, to: alphaTo },
                     duration: duration,
                     yoyo: true,
@@ -154,7 +170,7 @@
                                         kirakirarinSound.play();
                                         setTimeout(() => {
                                             yattaSound.play(); // 全ての星が消えた2秒後に「やったー」を再生
-                                        }, 1000);
+                                        }, 2000);
 
                                         this.scene.tweens.add({
                                             targets: star,
